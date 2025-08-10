@@ -3,25 +3,26 @@
 use core::net::SocketAddr;
 use std::{env::current_dir, path::PathBuf};
 
+use argh::FromArgs;
 use axum::Router;
-use clap::Parser;
 use tower_http::services::ServeDir;
-use ts_rust_helper::error::ReportProgramExit;
+use ts_error::ReportProgramExit;
 
-#[derive(Debug, Parser)]
+#[derive(Debug, FromArgs)]
 /// Host a static site
 struct Cli {
-    /// The directory that will be the site root.
+    /// the directory that will be the site root
+    #[argh(option)]
     pub root: Option<PathBuf>,
 
-    /// If the site should be exposed publicly to the network.
-    #[arg(long)]
+    /// whether the site should be exposed publicly to the network
+    #[argh(switch)]
     pub public: bool,
 }
 
 #[tokio::main]
 async fn main() -> ReportProgramExit {
-    let Cli { root, public } = Cli::parse();
+    let Cli { root, public } = argh::from_env();
     let root = root.unwrap_or_else(|| current_dir().unwrap());
     let serve_dir = ServeDir::new(root);
     let router = Router::new().fallback_service(serve_dir);
